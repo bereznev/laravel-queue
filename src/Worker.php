@@ -139,7 +139,7 @@ class Worker extends \Illuminate\Queue\Worker implements
 
     public function onPostMessageReceived(PostMessageReceived $context): void
     {
-        $this->stopIfNecessary($this->options, $this->lastRestart, $this->job);
+        $this->stopIfNecessary($this->options, $this->lastRestart, 0);
 
         if ($this->stopped) {
             $context->interruptExecution();
