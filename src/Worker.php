@@ -64,8 +64,13 @@ class Worker extends \Illuminate\Queue\Worker implements
                 return Result::ALREADY_ACKNOWLEDGED;
             });
         }
-
-        $queueConsumer->consume();
+        try {
+            $queueConsumer->consume();
+        } catch (\AMQPQueueException $e) {
+            if ('Consumer timeout exceed' == $e->getMessage()) {
+                return;
+            }
+        }
     }
 
     public function runNextJob($connectionName, $queueNames, WorkerOptions $options)
