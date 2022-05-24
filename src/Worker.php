@@ -56,7 +56,7 @@ class Worker extends \Illuminate\Queue\Worker implements
         }
 
         $context = $this->queue->getQueueInteropContext();
-        $queueConsumer = new QueueConsumer($context, new ChainExtension([$this]));
+        $queueConsumer = new QueueConsumer($context, new ChainExtension([$this]), [], null, $this->options->maxTime * 1000);
         foreach (explode(',', $queueNames) as $queueName) {
             $queueConsumer->bindCallback($queueName, function() {
                 $this->runJob($this->job, $this->connectionName, $this->options);
@@ -108,6 +108,8 @@ class Worker extends \Illuminate\Queue\Worker implements
 
     public function onStart(Start $context): void
     {
+        $this->startTime = hrtime(true) / 1e9;
+        
         if ($this->supportsAsyncSignals()) {
             $this->listenForSignals();
         }
@@ -144,7 +146,7 @@ class Worker extends \Illuminate\Queue\Worker implements
 
     public function onPostMessageReceived(PostMessageReceived $context): void
     {
-        $this->stopIfNecessary($this->options, $this->lastRestart, 0);
+        $this->stopIfNecessary($this->options, $this->lastRestart, $this->startTime);
 
         if ($this->stopped) {
             $context->interruptExecution();
